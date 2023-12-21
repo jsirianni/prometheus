@@ -67,7 +67,8 @@ end
 
 [
     '/usr/share/doc/prometheus/NOTICE',
-    '/usr/share/doc/prometheus/LICENSE'
+    '/usr/share/doc/prometheus/LICENSE',
+    '/usr/share/doc/prometheus/npm_licenses.tar.bz2'
 ].each do |file|
     describe file(file) do
         its('mode') { should cmp '0644' }
@@ -125,8 +126,8 @@ end
 
 [
     'http://localhost:9090/graph',
-    'http://localhost:9090/metrics'
-    'http://localhost:9090/status',
+    'http://localhost:9090/metrics',
+    'http://localhost:9090/status'
 ].each do |url|
     describe http(url) do
         its('status') { should cmp 200 }

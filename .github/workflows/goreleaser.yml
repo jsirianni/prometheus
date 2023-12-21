@@ -1,0 +1,58 @@
+name: Goreleaser
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5.0.0
+        with:
+          go-version: "1.21.5"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Test GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: v1.22.1
+          args: release --skip=publish --snapshot
+          distribution: goreleaser
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Cinc (Inspec)
+        run: |
+          curl -L https://omnitruck.cinc.sh/install.sh | \
+          sudo bash -s -- -P cinc-auditor -v 4
+
+      - name: Install Deb Package
+        run: |
+          sudo apt-get install -y -f ./dist/prometheus_linux_amd64.deb
+          sudo systemctl start prometheus
+
+      - name: Test Install
+        run: sudo cinc-auditor exec package/test/install/test.rb
+
+      - name: Uninstall Deb Package
+        run: |
+          sudo apt-get remove -y prometheus
+          sudo apt-get purge -y prometheus
+
+      - name: Test Uninstall
+        run: sudo cinc-auditor exec package/test/uninstall/test.rb

@@ -159,6 +159,13 @@ nfpms:
           owner: root
           group: root
           mode: 0644
+      - src: npm_licenses.tar.bz2
+        dst: /usr/share/doc/prometheus/npm_licenses.tar.bz2
+        type: "config"
+        file_info:
+          owner: root
+          group: root
+          mode: 0644
     scripts:
       preremove: package/scripts/preremove.sh
       postremove: package/scripts/postremove.sh

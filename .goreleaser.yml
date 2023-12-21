@@ -1,0 +1,187 @@
+before:
+  hooks:
+    # See `make build` for list build prerequisites. 
+    - make assets 
+    - make npm_licenses 
+    - make assets-compress 
+    - make plugins 
+
+builds:
+  - id: prometheus
+    binary: prometheus
+    main: ./cmd/prometheus
+    env:
+      - CGO_ENABLED=0
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -tags=netgo,builtinassets,stringlabels
+    ldflags:
+      - -s -w
+      - -X github.com/prometheus/common/version.Version={{ .Version }}
+      - -X github.com/prometheus/common/version.Revision=""
+      - -X github.com/prometheus/common/version.Branch={{ .Branch }}
+      - -X github.com/prometheus/common/version.BuildUser=observIQ
+      - -X github.com/prometheus/common/version.BuildDate={{ .Date }}
+    no_unique_dist_dir: false
+  - id: promtool
+    binary: promtool
+    main: ./cmd/promtool
+    env:
+      - CGO_ENABLED=0
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -tags=netgo,builtinassets,stringlabels
+    ldflags:
+      - -s -w
+      - -X github.com/prometheus/common/version.Version={{ .Version }}
+      - -X github.com/prometheus/common/version.Revision=""
+      - -X github.com/prometheus/common/version.Branch={{ .Branch }}
+      - -X github.com/prometheus/common/version.BuildUser=observIQ
+      - -X github.com/prometheus/common/version.BuildDate={{ .Date }}
+    no_unique_dist_dir: false
+
+nfpms:
+  - id: prometheus
+    file_name_template: "{{ .PackageName }}_{{ .Os }}_{{ .Arch }}"
+    package_name: prometheus
+    vendor: observIQ, Inc
+    maintainer: observIQ <support@observiq.com>
+    description: The Prometheus monitoring system and time series database.
+    homepage: https://github.com/prometheus/prometheus
+    license: Apache 2.0
+    builds:
+      - prometheus
+      - promtool
+    formats:
+      - rpm
+      - deb
+    bindir: /usr/bin
+    contents:
+      - dst: /var/lib/prometheus
+        type: dir
+        file_info:
+          owner: prometheus
+          group: prometheus
+          mode: 0750
+      - dst: /var/lib/prometheus/console_libraries
+        type: dir
+        file_info:
+          owner: prometheus
+          group: prometheus
+          mode: 0750
+      - dst: /var/lib/prometheus/consoles
+        type: dir
+        file_info:
+          owner: prometheus
+          group: prometheus
+          mode: 0750
+      - dst: /var/lib/prometheus/tsdb
+        type: dir
+        file_info:
+          owner: prometheus
+          group: prometheus
+          mode: 0750
+      - dst: /etc/prometheus
+        type: dir
+        file_info:
+          owner: prometheus
+          group: prometheus
+          mode: 0750
+      - dst: /usr/share/doc/prometheus
+        type: dir
+        file_info:
+          owner: root
+          group: root
+          mode: 0755
+      - src: package/service/prometheus.service
+        dst: /usr/lib/systemd/system/prometheus.service
+        type: "config"
+        file_info:
+          owner: root
+          group: root
+          mode: 0640
+      - src: package/config/prometheus.yml
+        dst: /etc/prometheus/prometheus.yml
+        type: "config"
+        file_info:
+          owner: prometheus
+          group: prometheus
+          mode: 0640
+      - src: package/config/web.yml
+        dst: /etc/prometheus/web.yml
+        type: "config"
+        file_info:
+          owner: prometheus
+          group: prometheus
+          mode: 0640
+      - src: package/config/rules.yml
+        dst: /etc/prometheus/rules.yml
+        type: "config"
+        file_info:
+          owner: prometheus
+          group: prometheus
+          mode: 0640
+      - src: console_libraries/*
+        dst: /var/lib/prometheus/console_libraries/
+        type: "config"
+        file_info:
+          owner: prometheus
+          group: prometheus
+          mode: 0640
+      - src: consoles/*
+        dst: /var/lib/prometheus/consoles/
+        type: "config"
+        file_info:
+          owner: prometheus
+          group: prometheus
+          mode: 0640
+      - src: NOTICE
+        dst: /usr/share/doc/prometheus/NOTICE
+        type: "config"
+        file_info:
+          owner: root
+          group: root
+          mode: 0644
+      - src: LICENSE
+        dst: /usr/share/doc/prometheus/LICENSE
+        type: "config"
+        file_info:
+          owner: root
+          group: root
+          mode: 0644
+      - src: npm_licenses.tar.bz2
+        dst: /usr/share/doc/prometheus/npm_licenses.tar.bz2
+        type: "config"
+        file_info:
+          owner: root
+          group: root
+          mode: 0644
+    scripts:
+      preremove: package/scripts/preremove.sh
+      postremove: package/scripts/postremove.sh
+      preinstall: package/scripts/preinstall.sh
+      postinstall: package/scripts/postinstall.sh
+
+archives:
+  - format: tar.gz
+    id: prometheus
+    name_template: prometheus-{{ .Version }}.{{ .Os }}-{{ .Arch }}
+    builds:
+      - prometheus
+
+checksum:
+  name_template: "{{ .ProjectName }}-v{{ .Version }}-SHA256SUMS"
+  algorithm: sha256
+
+release:
+  draft: false

@@ -50,7 +50,9 @@ jobs:
         run: sudo cinc-auditor exec package/test/install/test.rb
 
       - name: Uninstall Deb Package
-        run: sudo apt-get remove -y prometheus
+        run: |
+          sudo apt-get remove -y prometheus
+          sudo apt-get purge -y prometheus
 
       - name: Test Uninstall
         run: sudo cinc-auditor exec package/test/uninstall/test.rb

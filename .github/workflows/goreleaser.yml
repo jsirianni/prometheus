@@ -31,7 +31,7 @@ jobs:
         uses: goreleaser/goreleaser-action@v5
         with:
           version: v1.22.1
-          args: release --skip=publish --snapshot --single-target
+          args: release --skip=publish --snapshot
           distribution: goreleaser
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
